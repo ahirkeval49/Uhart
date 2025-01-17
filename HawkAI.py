@@ -142,7 +142,7 @@ def main():
         return
 
     user_query = st.text_input("Enter your query here:")
-     if user_query and st.button("Answer Query"):
+    if user_query and st.button("Answer Query"):
         try:
             relevant_chunks = find_relevant_chunks(
                 user_query, 
