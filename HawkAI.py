@@ -2,7 +2,6 @@ import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 from langchain_groq import ChatGroq  # Correct import for Groq integration
-
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
