@@ -88,6 +88,11 @@ def find_relevant_chunks(question, contexts, threshold=0.3, top_n=3):
     # Sort by similarity score
     relevant_chunks = sorted(relevant_chunks, key=lambda x: x[1], reverse=True)
 
+    # Log matching chunks for debugging
+    print(f"Top {top_n} relevant chunks for '{question}':")
+    for chunk, score in relevant_chunks[:top_n]:
+        print(f"Score: {score}, Chunk: {chunk[:100]}")
+
     # Return the top N chunks
     return [chunk[0] for chunk in relevant_chunks[:top_n]]
 
@@ -130,7 +135,7 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
         The user asked: "{question}"
 
         Provide a concise and accurate response. If the answer is not available in the context, respond with 
-        "I'm sorry, I don't have that information. Please visit the website or contact admissions for further assistance."
+        "I'm sorry, I don't have that information. Please visit the University of Hartford website or contact admissions for further assistance."
         """)
         response = llm.invoke(prompt.format_prompt(context=best_context, question=question).to_string())
         return response.content.strip()
