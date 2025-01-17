@@ -68,7 +68,7 @@ def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
     st.write("I am Howie AI, how can I assist you today?")
 
-    # Define URLs to scrape
+    # Critical URLs to scrape
     urls = [
         "https://www.hartford.edu/academics/graduate-professional-studies/",
         "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
@@ -79,10 +79,10 @@ def main():
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
         "https://www.hartford.edu/admission/partnerships/default.aspx",
         "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
-        "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
+        "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
     ]
 
-        # Automatic scraping on app load
+    # Automatic scraping on app load
     if 'contexts' not in st.session_state:
         with st.spinner("Scraping data..."):
             st.session_state['contexts'] = scrape_website(urls)
@@ -90,9 +90,26 @@ def main():
     user_query = st.text_input("Enter your query here:")
     if user_query:
         if st.button("Answer Query"):
+            # Prioritize critical URLs
+            prioritized_urls = [
+                "https://www.hartford.edu/academics/graduate-professional-studies/",
+                "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
+                "https://www.hartford.edu/admission/graduate-admission/default.aspx",
+                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx",
+                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-programs.aspx",
+                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx",
+                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
+                "https://www.hartford.edu/admission/partnerships/default.aspx",
+                "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
+                "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
+            ]
+
             # Find the most relevant chunks for the user's query
-            relevant_chunks = find_relevant_chunks(user_query, st.session_state['contexts'], token_limit=6000)
+            relevant_chunks = find_relevant_chunks(
+                user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=prioritized_urls
+            )
             context_to_send = "\n\n".join(relevant_chunks)
+            context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
 
             # Initialize Groq model
             groq_model = initialize_groq_model()
@@ -101,7 +118,7 @@ def main():
             try:
                 response = groq_model.invoke(
                     f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
-                    timeout=30  # Timeout for model invocation
+                    timeout=30
                 )
                 st.markdown(f"**Response:** {response.content.strip()}")
             except Exception as e:
@@ -109,3 +126,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
