@@ -36,7 +36,7 @@ def scrape_website(urls):
     return url_contexts
 
 # Function to find relevant chunks based on user query
-def find_relevant_chunks(query, contexts, token_limit=6000):
+def find_relevant_chunks(query, contexts, token_limit=3000):
     relevant_chunks = []
     total_tokens = 0
 
