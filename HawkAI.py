@@ -45,9 +45,13 @@ def scrape_website(urls):
             text_splitter = CharacterTextSplitter(
                 separator="\n",
                 chunk_size=500,  # Use smaller chunks for better context
-                chunk_overlap=50  # Avoid overlap issues
+                chunk_overlap=100  # Avoid overlap issues
             )
             chunks = text_splitter.split_text(raw_text)
+
+            # Log chunk sizes for debugging
+            for idx, chunk in enumerate(chunks):
+                print(f"Chunk {idx + 1}: Size {len(chunk)}")
 
             # Store chunks for each URL
             url_contexts[url] = chunks
@@ -106,7 +110,7 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
         # Debugging: Log context matching process
         if st.sidebar.checkbox("Show debug info"):
             st.sidebar.write("Matched Chunks:")
-            st.sidebar.write(best_context if best_context else "No matched chunks found.")
+            st.sidebar.write(relevant_chunks)
 
         # If no relevant chunks are found, fallback response
         if not best_context.strip():
