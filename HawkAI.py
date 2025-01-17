@@ -135,7 +135,7 @@ def main():
         return
 
     user_query = st.text_input("Enter your query here:")
-   user_query = st.text_input("Enter your query here:")
+    user_query = st.text_input("Enter your query here:")
     if user_query:
         if "scholarship" in user_query.lower() or "assistantship" in user_query.lower():
             scholarship_info = """
