@@ -58,12 +58,16 @@ def ask_groq(question, contexts, groq_api_key):
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
     st.write("How can I assist you today?")
-    urls = [ # List of URLs
+    
+    urls = [
         "https://www.hartford.edu/admission/graduate-admission/default.aspx",
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/",
-        # Add other relevant URLs
+        # Add more URLs as needed
     ]
-    groq_api_key = st.secrets["GROQ_API_KEY"]
+    
+    # Retrieve the GROQ API key from the secrets file
+    groq_api_key = st.secrets["general"]["GROQ_API_KEY"]  # Adjusted to reflect the correct path
+
     contexts = scrape_website(urls)
     user_query = st.text_input("Ask me a question about Graduate Admissions:")
     if st.button("Ask Howie AI"):
