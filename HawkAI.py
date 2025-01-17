@@ -4,6 +4,7 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 import os
+import re
 
 ########################################
 # STREAMLIT CONFIG & STYLING
@@ -56,6 +57,37 @@ def scrape_website(urls):
         return {}
 
 
+def preprocess_text(text):
+    """
+    Preprocess text by removing punctuation and converting to lowercase.
+    """
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", "", text)  # Remove punctuation
+    return text
+
+
+def find_best_context(question, contexts):
+    """
+    Finds the most relevant context based on keyword matching.
+    """
+    question = preprocess_text(question)
+    best_context = ""
+    max_overlap = 0
+
+    for url, chunks in contexts.items():
+        for chunk in chunks:
+            # Preprocess the chunk for comparison
+            chunk_preprocessed = preprocess_text(chunk)
+
+            # Count overlapping keywords
+            overlap = sum(1 for word in question.split() if word in chunk_preprocessed)
+            if overlap > max_overlap:
+                max_overlap = overlap
+                best_context = chunk
+
+    return best_context if best_context else None
+
+
 def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
     """
     Sends the user's question and the most relevant context to the Groq LLM.
@@ -67,15 +99,15 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
             model_name=model
         )
 
-        # Select the most relevant context manually
-        best_context = ""
-        for url, chunks in contexts.items():
-            for chunk in chunks:
-                if question.lower() in chunk.lower():  # Keyword search
-                    best_context += chunk + "\n\n"
+        # Find the best matching context
+        best_context = find_best_context(question, contexts)
 
-        if not best_context:  # Fallback to the first URL's chunks if no match
-            best_context = "\n\n".join(contexts.get(list(contexts.keys())[0], []))
+        # If no context is found, use a fallback response
+        if not best_context:
+            return (
+                "I'm sorry, I couldn't find specific information for your query. "
+                "Please visit the University of Hartford website or contact admissions for further assistance."
+            )
 
         # Prompt template
         prompt = PromptTemplate.from_template("""
