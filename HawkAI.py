@@ -1,6 +1,6 @@
 import streamlit as st
 from langchain_community.document_loaders import WebBaseLoader
-from langchain.text_splitter import CharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 import os
@@ -37,13 +37,12 @@ def scrape_website(urls):
         url_contexts = {}
         for url in urls:
             # Load website content
-            loader = WebBaseLoader(url)
+            loader = WebBaseLoader(url, headers={"User-Agent": os.environ["USER_AGENT"]})
             documents = loader.load()
             raw_text = "\n".join([doc.page_content for doc in documents])
 
             # Chunking the text for LLM processing
-            text_splitter = CharacterTextSplitter(
-                separator="\n",
+            text_splitter = RecursiveCharacterTextSplitter(
                 chunk_size=500,  # Use smaller chunks for better context
                 chunk_overlap=100  # Avoid overlap issues
             )
@@ -51,7 +50,8 @@ def scrape_website(urls):
 
             # Log chunk sizes for debugging
             for idx, chunk in enumerate(chunks):
-                print(f"Chunk {idx + 1}: Size {len(chunk)}")
+                if len(chunk) > 500:
+                    print(f"Chunk {idx + 1} exceeds size limit: {len(chunk)}")
 
             # Store chunks for each URL
             url_contexts[url] = chunks
