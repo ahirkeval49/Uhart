@@ -1,11 +1,8 @@
 import streamlit as st
-from bs4 import BeautifulSoup
-import requests
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
-from langchain.chains import ConversationChain
 import os
 
 ########################################
@@ -36,27 +33,22 @@ def scrape_website(urls):
     """
     try:
         url_contexts = {}
-        headers = {"User-Agent": os.environ["USER_AGENT"]}
-        
         for url in urls:
-            response = requests.get(url, headers=headers, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, "lxml")
-                # Extract readable text content (e.g., paragraphs)
-                text_content = " ".join(p.get_text() for p in soup.find_all("p"))
-                
-                # Chunking the text for LLM processing
-                text_splitter = CharacterTextSplitter(
-                    separator="\n",
-                    chunk_size=500,
-                    chunk_overlap=50
-                )
-                chunks = text_splitter.split_text(text_content)
+            # Load website content
+            loader = WebBaseLoader(url)
+            documents = loader.load()
+            raw_text = "\n".join([doc.page_content for doc in documents])
 
-                # Store chunks for each URL
-                url_contexts[url] = chunks
-            else:
-                st.warning(f"Failed to fetch {url}. HTTP Status: {response.status_code}")
+            # Chunking the text for LLM processing
+            text_splitter = CharacterTextSplitter(
+                separator="\n",
+                chunk_size=500,  # Use a smaller chunk size to avoid warnings
+                chunk_overlap=50  # Avoid overlap issues
+            )
+            chunks = text_splitter.split_text(raw_text)
+
+            # Store chunks for each URL
+            url_contexts[url] = chunks
 
         return url_contexts
     except Exception as e:
@@ -67,7 +59,6 @@ def scrape_website(urls):
 def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
     """
     Sends the user's question and the most relevant context to the Groq LLM.
-    Handles follow-up questions to refine responses.
     """
     try:
         llm = ChatGroq(
@@ -96,7 +87,7 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
 
         The user asked: "{question}"
 
-        If the question is ambiguous or incomplete, ask a follow-up question to clarify. If the context has an answer, provide a concise and accurate response. If the answer is not available in the context, respond with 
+        Provide a concise and accurate response. If the answer is not available in the context, respond with 
         "I'm sorry, I don't have that information. Please visit the website or contact admissions for further assistance."
         """)
         # Execute the prompt
@@ -136,6 +127,19 @@ def main():
     # Cache and scrape website content
     with st.spinner("Scraping website content..."):
         contexts = scrape_website(urls)
+
+    # FAQ Section
+    st.sidebar.header("Frequently Asked Questions")
+    faqs = {
+        "How can I apply?": "You can apply directly through the Graduate Admissions portal on the University of Hartford's website.",
+        "What are the admission requirements?": "Admissions requirements vary by program. Typically, you'll need transcripts, letters of recommendation, and a personal statement.",
+        "What is the application fee?": "The application fee for graduate programs is typically $50.",
+        "When are application deadlines?": "Deadlines vary by program. Please refer to the program-specific page on the website."
+    }
+
+    for question, answer in faqs.items():
+        st.sidebar.markdown(f"**{question}**")
+        st.sidebar.write(answer)
 
     # User Query Input
     user_query = st.text_input("Ask me a question about Graduate Admissions:", "")
