@@ -6,7 +6,6 @@ from langchain_core.prompts import PromptTemplate
 import os
 import re
 from difflib import SequenceMatcher
-import logging
 
 ########################################
 # STREAMLIT CONFIG & STYLING
@@ -25,10 +24,6 @@ st.markdown(HIDE_FOOTER, unsafe_allow_html=True)
 # Set USER_AGENT environment variable for web scraping
 os.environ["USER_AGENT"] = "HawkAI/1.0 (+https://www.hartford.edu)"
 
-# Configure logging for debugging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 ########################################
 # HELPER FUNCTIONS
 ########################################
@@ -41,8 +36,8 @@ def scrape_website(urls):
     try:
         url_contexts = {}
         for url in urls:
-            # Load website content with User-Agent header
-            loader = WebBaseLoader(url, headers={"User-Agent": os.environ["USER_AGENT"]})
+            # Load website content
+            loader = WebBaseLoader(url)
             documents = loader.load()
             raw_text = "\n".join([doc.page_content for doc in documents])
 
@@ -52,11 +47,6 @@ def scrape_website(urls):
                 chunk_overlap=100  # Avoid overlap issues
             )
             chunks = text_splitter.split_text(raw_text)
-
-            # Log chunk sizes for debugging
-            for idx, chunk in enumerate(chunks):
-                if len(chunk) > 500:
-                    logger.warning(f"Chunk {idx + 1} exceeds size limit: {len(chunk)}")
 
             # Store chunks for each URL
             url_contexts[url] = chunks
@@ -111,11 +101,6 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
         # Find the most relevant chunks
         relevant_chunks = find_relevant_chunks(question, contexts)
         best_context = "\n\n".join(relevant_chunks)
-
-        # Debugging: Log context matching process
-        if st.sidebar.checkbox("Show debug info"):
-            st.sidebar.write("Matched Chunks:")
-            st.sidebar.write(relevant_chunks)
 
         # If no relevant chunks are found, fallback response
         if not best_context.strip():
