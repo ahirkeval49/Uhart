@@ -78,7 +78,7 @@ def main():
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
         "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
         "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
-                "https://www.hartford.edu/academics/graduate-professional-studies/partnerships.aspx",
+        "https://www.hartford.edu/academics/graduate-professional-studies/partnerships.aspx",
         "https://www.hartford.edu/academics/graduate-professional-studies/programs/default.aspx",
         "https://www.hartford.edu/academics/schools-colleges/ceta/academics/department-of-architecture/master-of-architecture.aspx",
         "https://www.hartford.edu/barney/academics/business-administration/dual-mba-march.aspx",
