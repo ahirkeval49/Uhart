@@ -117,15 +117,17 @@ def main():
         "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
     ]
 
-    # Automatic scraping on app load
+        # Automatic scraping on app load
     if 'contexts' not in st.session_state:
-        st.session_state['contexts'] = scrape_website(urls)
+        with st.spinner("Scraping data..."):
+            st.session_state['contexts'] = scrape_website(urls)
 
     user_query = st.text_input("Enter your query here:")
     if user_query:
         if st.button("Answer Query"):
-            # Collect all text chunks
-            all_text = ' '.join([chunk for url_chunks in st.session_state['contexts'].values() for chunk in url_chunks])
+            # Find the most relevant chunks for the user's query
+            relevant_chunks = find_relevant_chunks(user_query, st.session_state['contexts'], token_limit=6000)
+            context_to_send = "\n\n".join(relevant_chunks)
 
             # Initialize Groq model
             groq_model = initialize_groq_model()
@@ -133,7 +135,8 @@ def main():
             # Generate a response using Groq LLM
             try:
                 response = groq_model.invoke(
-                    f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{all_text}\n\nQuestion: {user_query}"
+                    f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
+                    timeout=30  # Timeout for model invocation
                 )
                 st.markdown(f"**Response:** {response.content.strip()}")
             except Exception as e:
