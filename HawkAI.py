@@ -39,7 +39,11 @@ def scrape_website(urls):
 def find_relevant_chunks(query, contexts, token_limit=1000):
     relevant_chunks = []
     total_tokens = 0
-
+    
+   # Approximate token count for the query and prompt text
+    query_token_count = len(query.split()) + 50  # Extra 50 tokens for prompt text
+    available_tokens = token_limit - query_token_count
+    
     for url, chunks in contexts.items():
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
