@@ -89,7 +89,7 @@ urls = [
     "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
 ]
 
- # Automatic scraping on app load
+    # Automatic scraping on app load
     if 'contexts' not in st.session_state:
         st.session_state['contexts'] = scrape_website(urls)
 
