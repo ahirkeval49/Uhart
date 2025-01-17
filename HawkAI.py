@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0.2,
+        temperature=0.1,
         model_name="llama-3.1-8b-instant",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
@@ -135,26 +135,27 @@ def main():
         return
 
     user_query = st.text_input("Enter your query here:")
-    if user_query and st.button("Answer Query"):
-        try:
-            # Find the most relevant chunks for the user's query
+   user_query = st.text_input("Enter your query here:")
+    if user_query:
+        if "scholarship" in user_query.lower() or "assistantship" in user_query.lower():
+            scholarship_info = """
+            We do not offer merit-based scholarships to international students and the tuition charged to them is the same as for domestic students. However, some departments provide Graduate Assistantships, and all accepted students are able to apply for Graduate Assistantships through our portal Handshake. Please note that Graduate Assistantships are offered based on vacancies. See our webpage on Financing your Graduate Education for more information.
+            """
+            st.markdown(f"**Response:** {scholarship_info}")
+        elif st.button("Answer Query"):
             relevant_chunks = find_relevant_chunks(
-                user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=urls
+                user_query, st.session_state['contexts'], token_limit=6000
             )
             context_to_send = "\n\n".join(relevant_chunks)
-            context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
-
-            # Initialize Groq model
-            groq_model = initialize_groq_model()
-
-            # Generate a response using Groq LLM
-            response = groq_model.invoke(
-                f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
-                timeout=30
-            )
-            st.markdown(f"**Response:** {response.content.strip()}")
-        except Exception as e:
-            st.error(f"Error generating response: {e}")
+            try:
+                groq_model = initialize_groq_model()
+                response = groq_model.invoke(
+                    f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
+                    timeout=30
+                )
+                st.markdown(f"**Response:** {response.content.strip()}")
+            except Exception as e:
+                st.error(f"Error generating response: {e}")
 
 if __name__ == "__main__":
     main()
