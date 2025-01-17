@@ -117,6 +117,9 @@ def main():
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx",
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
         "https://www.hartford.edu/admission/partnerships/default.aspx",
+        "https://www.hartford.edu/admission/graduate-admission/Frequently%20Asked%20Questions.aspx",
+        "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
+
     ]
 
     # Retrieve Groq API key
