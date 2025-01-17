@@ -103,7 +103,6 @@ def main():
                 "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
                 "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
             ]
-
             # Find the most relevant chunks for the user's query
             relevant_chunks = find_relevant_chunks(
                 user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=prioritized_urls
@@ -126,4 +125,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
