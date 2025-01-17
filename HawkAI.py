@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0.2,
+        temperature=0.7,
         model_name="llama-3.1-70b-versatile",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
@@ -55,15 +55,15 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
     for url, chunks in contexts.items():
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
-            token_count = len(chunk.split())  # Approximate token count by word count
+            token_count = len(chunk.split())
             if url in prioritized_urls:
                 prioritized_chunks.append((chunk, similarity, token_count))
             else:
                 other_chunks.append((chunk, similarity, token_count))
 
     # Sort chunks by similarity
-    prioritized_chunks = sorted(prioritized_chunks, key=lambda x: x[1], reverse=True)
-    other_chunks = sorted(other_chunks, key=lambda x: x[1], reverse=True)
+    prioritized_chunks.sort(key=lambda x: x[1], reverse=True)
+    other_chunks.sort(key=lambda x: x[1], reverse=True)
 
     # Add prioritized chunks first
     for chunk, _, token_count in prioritized_chunks:
@@ -82,8 +82,7 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
             break
 
     return relevant_chunks
-    
-# Truncate context to ensure it fits within the token limit
+
 def truncate_context_to_token_limit(context, token_limit):
     """
     Truncate the context to fit within the token limit by limiting the number of words.
@@ -92,7 +91,7 @@ def truncate_context_to_token_limit(context, token_limit):
     words = context.split()
     truncated_context = " ".join(words[:token_limit])
     return truncated_context
-    
+
 # Streamlit App
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
@@ -123,51 +122,26 @@ def main():
         return
 
     user_query = st.text_input("Enter your query here:")
-    if user_query:
-        if st.button("Answer Query"):
-            prioritized_urls = [
-                "https://www.hartford.edu/academics/graduate-professional-studies/",
-                "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
-                "https://www.hartford.edu/admission/graduate-admission/default.aspx",
-                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx",
-                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-programs.aspx",
-                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-student-experience.aspx",
-                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
-                "https://www.hartford.edu/admission/partnerships/default.aspx",
-                "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
-                "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
-            ]
+    if user_query and st.button("Answer Query"):
+        try:
+            # Find the most relevant chunks for the user's query
+            relevant_chunks = find_relevant_chunks(
+                user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=urls
+            )
+            context_to_send = "\n\n".join(relevant_chunks)
+            context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
 
-            # Debugging: Ensure inputs to find_relevant_chunks are valid
-            if not isinstance(user_query, str):
-                st.error("Query must be a string.")
-                return
-            if not isinstance(st.session_state['contexts'], dict):
-                st.error("Contexts must be a dictionary.")
-                return
-            if not isinstance(prioritized_urls, list):
-                st.error("Prioritized URLs must be a list.")
-                return
+            # Initialize Groq model
+            groq_model = initialize_groq_model()
 
-            try:
-                # Find the most relevant chunks for the user's query
-                relevant_chunks = find_relevant_chunks(
-                    user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=prioritized_urls
-                )
-                context_to_send = "\n\n".join(relevant_chunks)
-                context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
-
-                # Initialize Groq model
-                groq_model = initialize_groq_model()
-
-                # Generate a response using Groq LLM
-                response = groq_model.invoke(
-                    f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
-                    timeout=30
-                )
-                st.markdown(f"**Response:** {response.content.strip()}")
-            except Exception as e:
-                st.error(f"Error generating response: {e}")
+            # Generate a response using Groq LLM
+            response = groq_model.invoke(
+                f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
+                timeout=30
+            )
+            st.markdown(f"**Response:** {response.content.strip()}")
+        except Exception as e:
+            st.error(f"Error generating response: {e}")
 
 if __name__ == "__main__":
     main()
