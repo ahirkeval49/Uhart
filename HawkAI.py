@@ -36,16 +36,29 @@ def scrape_website(urls):
     return url_contexts
 
 # Function to find relevant chunks based on user query
-def find_relevant_chunks(query, contexts, max_chunks=5):
+def find_relevant_chunks(query, contexts, token_limit=6000):
     relevant_chunks = []
+    total_tokens = 0
+
     for url, chunks in contexts.items():
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
-            relevant_chunks.append((chunk, similarity))
-    # Sort chunks by similarity and select top N
-    relevant_chunks = sorted(relevant_chunks, key=lambda x: x[1], reverse=True)
-    return [chunk[0] for chunk in relevant_chunks[:max_chunks]]
+            token_count = len(chunk.split())  # Approximate token count by word count
+            relevant_chunks.append((chunk, similarity, token_count))
 
+    # Sort chunks by similarity
+    relevant_chunks = sorted(relevant_chunks, key=lambda x: x[1], reverse=True)
+
+    # Dynamically add chunks until token limit is reached
+    selected_chunks = []
+    for chunk, _, token_count in relevant_chunks:
+        if total_tokens + token_count <= token_limit:
+            selected_chunks.append(chunk)
+            total_tokens += token_count
+        else:
+            break
+
+    return selected_chunks
 # Streamlit App
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
