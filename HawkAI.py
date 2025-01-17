@@ -134,7 +134,7 @@ def main():
         st.error("No contexts available for processing. Scraping might have failed.")
         return
 
-   user_query = st.text_input("Enter your query here:")
+    user_query = st.text_input("Enter your query here:")
     if user_query and st.button("Answer Query"):
         try:
             # Find the most relevant chunks for the user's query
