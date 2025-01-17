@@ -15,13 +15,14 @@ def initialize_groq_model():
 def simple_text_split(text, chunk_size=500):
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
-# Scraping function with a custom user agent
+# Caching-enabled scraping function with timeout
+@st.cache_data(show_spinner=True)
 def scrape_website(urls):
     headers = {'User-Agent': 'HawkAI/1.0 (+https://www.hartford.edu)'}
     url_contexts = {}
     for url in urls:
         try:
-            response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers, timeout=10)  # Set timeout for requests
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 text = ' '.join(soup.stripped_strings)  # Clean text by removing extra whitespace
@@ -29,7 +30,7 @@ def scrape_website(urls):
                 url_contexts[url] = chunks
             else:
                 st.error(f"Failed to retrieve {url}: HTTP {response.status_code}")
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             st.error(f"Error scraping {url}: {e}")
     return url_contexts
 
