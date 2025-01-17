@@ -1,6 +1,6 @@
-streamlit==1.28.0
-langchain-core==0.0.10
-langchain==0.0.345
-langchain-groq==0.2.3
-requests==2.31.0
+streamlit
+langchain-core
+langchain
+langchain-groq
+requests
 
