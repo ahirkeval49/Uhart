@@ -1,13 +1,42 @@
 import streamlit as st
-from bs4 import BeautifulSoup
 import requests
-import PyPDF2
-from langchain import LangChain
-from io import BytesIO
+from bs4 import BeautifulSoup
+from langchain_groq import ChatGroq  # Correct import for Groq integration
 
-# Initialize LangChain
-lc = LangChain(model="llama-3.1-70b-versatile", api_key=st.secrets["general"]["GROQ_API_KEY"])
+# Define function to initialize the Groq model
+def initialize_groq_model():
+    return ChatGroq(
+        temperature=0.7,
+        model_name="llama-3.1-70b-versatile",
+        groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
+    )
 
+# Simple text splitting function
+def simple_text_split(text, chunk_size=500):
+    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
+
+# Scraping function with a custom user agent
+def scrape_website(urls):
+    headers = {'User-Agent': 'HawkAI/1.0 (+https://www.hartford.edu)'}
+    url_contexts = {}
+    for url in urls:
+        try:
+            response = requests.get(url, headers=headers)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                text = ' '.join(soup.stripped_strings)  # Clean text by removing extra whitespace
+                chunks = simple_text_split(text)
+                url_contexts[url] = chunks
+            else:
+                st.error(f"Failed to retrieve {url}: HTTP {response.status_code}")
+        except Exception as e:
+            st.error(f"Error scraping {url}: {e}")
+    return url_contexts
+    
+# Streamlit App
+def main():
+    st.title("🦅 Hawk AI: Your Admissions Assistant")
+    st.write("I am Howie AI, how can I assist you today?")
 # Define URLs to scrape
 urls = [
     "https://www.hartford.edu/academics/graduate-professional-studies/",
@@ -61,32 +90,27 @@ urls = [
     "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
 ]
 
-# Scraping function
-def scrape_text(url):
-    headers = {'User-Agent': 'Mozilla/5.0'}
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
-        soup = BeautifulSoup(response.content, 'html.parser')
-        return ' '.join([p.text for p in soup.find_all('p')])
-    else:
-        return "Failed to fetch data."
+ # Automatic scraping on app load
+    if 'contexts' not in st.session_state:
+        st.session_state['contexts'] = scrape_website(urls)
 
-# Main app function
-def main():
-    st.title("Hawk AI: Graduate Admissions Assistant")
-    st.write("I am Howie AI, how can I assist you today?")
-
-    # Concatenate texts from all URLs
-    all_texts = [scrape_text(url) for url in urls]
-
-    # User query input
-    user_query = st.text_input("Please enter your query related to Graduate Admissions:")
-    
+    user_query = st.text_input("Enter your query here:")
     if user_query:
-        response = lc.ask(user_query, context=all_texts)
-        st.write("Howie AI:", response)
-    else:
-        st.write("Please enter a question to get help from Howie AI.")
+        if st.button("Answer Query"):
+            # Collect all text chunks
+            all_text = ' '.join([chunk for url_chunks in st.session_state['contexts'].values() for chunk in url_chunks])
+
+            # Initialize Groq model
+            groq_model = initialize_groq_model()
+
+            # Generate a response using Groq LLM
+            try:
+                response = groq_model.invoke(
+                    f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{all_text}\n\nQuestion: {user_query}"
+                )
+                st.markdown(f"**Response:** {response.content.strip()}")
+            except Exception as e:
+                st.error(f"Error generating response: {e}")
 
 if __name__ == "__main__":
     main()
