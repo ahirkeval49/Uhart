@@ -8,7 +8,7 @@ from difflib import SequenceMatcher
 def initialize_groq_model():
     return ChatGroq(
         temperature=0,  # Low temperature to minimize creative generation
-        model_name="llama3-8b-8192",
+        model_name="llama-3.1-8b-instant",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
 
