@@ -6,6 +6,7 @@ from langchain_core.prompts import PromptTemplate
 import os
 import re
 from difflib import SequenceMatcher
+import logging
 
 ########################################
 # STREAMLIT CONFIG & STYLING
@@ -24,6 +25,10 @@ st.markdown(HIDE_FOOTER, unsafe_allow_html=True)
 # Set USER_AGENT environment variable for web scraping
 os.environ["USER_AGENT"] = "HawkAI/1.0 (+https://www.hartford.edu)"
 
+# Configure logging for debugging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 ########################################
 # HELPER FUNCTIONS
 ########################################
@@ -36,8 +41,8 @@ def scrape_website(urls):
     try:
         url_contexts = {}
         for url in urls:
-            # Load website content
-            loader = WebBaseLoader(url)
+            # Load website content with User-Agent header
+            loader = WebBaseLoader(url, headers={"User-Agent": os.environ["USER_AGENT"]})
             documents = loader.load()
             raw_text = "\n".join([doc.page_content for doc in documents])
 
@@ -51,7 +56,7 @@ def scrape_website(urls):
             # Log chunk sizes for debugging
             for idx, chunk in enumerate(chunks):
                 if len(chunk) > 500:
-                    print(f"Chunk {idx + 1} exceeds size limit: {len(chunk)}")
+                    logger.warning(f"Chunk {idx + 1} exceeds size limit: {len(chunk)}")
 
             # Store chunks for each URL
             url_contexts[url] = chunks
