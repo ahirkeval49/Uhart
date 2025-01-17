@@ -6,4 +6,5 @@ langchain-experimental
 requests
 pypdf
 PyPDF2
-
+beautifulsoup4
+lxml
