@@ -88,9 +88,8 @@ urls = [
     "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
     "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
 ]
-
     # Automatic scraping on app load
-     if 'contexts' not in st.session_state:
+    if 'contexts' not in st.session_state:
         st.session_state['contexts'] = scrape_website(urls)
 
     user_query = st.text_input("Enter your query here:")
@@ -110,6 +109,7 @@ urls = [
                 st.markdown(f"**Response:** {response.content.strip()}")
             except Exception as e:
                 st.error(f"Error generating response: {e}")
+
 
 if __name__ == "__main__":
     main()
