@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0.7,
+        temperature=0.2,
         model_name="llama-3.1-70b-versatile",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
@@ -16,7 +16,6 @@ def initialize_groq_model():
 def simple_text_split(text, chunk_size=500):
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
-# Caching-enabled scraping function with timeout
 @st.cache_data(show_spinner=True)
 def scrape_website(urls):
     headers = {'User-Agent': 'HawkAI/1.0 (+https://www.hartford.edu)'}
@@ -36,22 +35,13 @@ def scrape_website(urls):
     return url_contexts
 
 def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=None):
-    """
-    Finds the most relevant chunks based on the query, with prioritization for certain URLs
-    and ensuring the total token count does not exceed the limit.
-    """
-    prioritized_urls = prioritized_urls or []  # Default to an empty list if not provided
+    prioritized_urls = prioritized_urls or []
     relevant_chunks = []
     total_tokens = 0
-
-    # Approximate token count for the query and prompt text
-    query_token_count = len(query.split()) + 50  # Reserve 50 tokens for prompt overhead
+    query_token_count = len(query.split()) + 50
     available_tokens = token_limit - query_token_count
-
-    # Separate chunks into prioritized and non-prioritized
     prioritized_chunks = []
     other_chunks = []
-
     for url, chunks in contexts.items():
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
@@ -60,49 +50,22 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
                 prioritized_chunks.append((chunk, similarity, token_count))
             else:
                 other_chunks.append((chunk, similarity, token_count))
-
-    # Sort chunks by similarity
     prioritized_chunks.sort(key=lambda x: x[1], reverse=True)
     other_chunks.sort(key=lambda x: x[1], reverse=True)
-
-    # Add prioritized chunks first
-    for chunk, _, token_count in prioritized_chunks:
+    for chunk, _, token_count in prioritized_chunks + other_chunks:
         if total_tokens + token_count <= available_tokens:
             relevant_chunks.append(chunk)
             total_tokens += token_count
         else:
             break
-
-    # Add other chunks if space allows
-    for chunk, _, token_count in other_chunks:
-        if total_tokens + token_count <= available_tokens:
-            relevant_chunks.append(chunk)
-            total_tokens += token_count
-        else:
-            break
-
     return relevant_chunks
 
-def truncate_context_to_token_limit(context, token_limit):
-    """
-    Truncate the context to fit within the token limit by limiting the number of words.
-    Token count is approximated as the word count for simplicity.
-    """
+def truncate_context_to_token_limit(context, max_tokens):
     words = context.split()
-    truncated_context = " ".join(words[:token_limit])
-    return truncated_context
+    if len(words) > max_tokens:
+        words = words[:max_tokens]
+    return " ".join(words)
 
-def dynamically_reduce_content(full_prompt, max_tokens=6000):
-    """
-    Dynamically reduce the content of the full prompt until it's within the token limit.
-    Split the context and reduce from the end, as those are likely less relevant.
-    """
-    parts = full_prompt.split()
-    while len(parts) > max_tokens:
-        parts = parts[:-1]  # Remove the last word iteratively
-    return " ".join(parts)
-
-# Streamlit App
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
     st.write("I am Howie AI, how can I assist you today?")
