@@ -1,7 +1,10 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-from langchain.text_splitter import TextSplitter
+
+# Simple text splitting function
+def simple_text_split(text, chunk_size=500):
+    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
 # Scraping function with a custom user agent
 def scrape_website(urls):
@@ -13,8 +16,7 @@ def scrape_website(urls):
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 text = ' '.join(soup.stripped_strings)  # Clean text by removing extra whitespace
-                text_splitter = TextSplitter(chunk_size=500, overlap_size=100)
-                chunks = text_splitter.split(text)
+                chunks = simple_text_split(text)
                 url_contexts[url] = chunks
             else:
                 st.error(f"Failed to retrieve {url}: HTTP {response.status_code}")
@@ -32,21 +34,19 @@ def main():
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/",
         # Add more URLs as needed
     ]
-    
-    if st.button("Scrape Websites"):
-        with st.spinner("Fetching content..."):
-            contexts = scrape_website(urls)
-            st.success("Content fetched successfully!")
+
+    # Automatic scraping on app load
+    contexts = scrape_website(urls)
+    st.session_state['contexts'] = contexts  # Store contexts in session state if needed for re-use
 
     user_query = st.text_input("Enter your query here:")
-    if st.button("Answer Query"):
-        if user_query:
-            # Assuming a simple response function is defined
-            # You would need to implement or specify how the response is generated based on the context
+    if user_query:
+        if st.button("Answer Query"):
+            # Placeholder response generation
             response = "Placeholder response based on user query and scraped content."
             st.markdown(f"**Response:** {response}")
         else:
-            st.warning("Please enter a query to get a response.")
+            st.info("Enter a query and click the button to get a response.")
 
 if __name__ == "__main__":
     main()
