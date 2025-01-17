@@ -1,5 +1,6 @@
 import streamlit as st
 from langchain.document_loaders import WebBaseLoader
+from langchain_experimental.document_loaders import WebBaseLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
