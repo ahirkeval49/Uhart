@@ -82,7 +82,17 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
             break
 
     return relevant_chunks
-
+    
+# Truncate context to ensure it fits within the token limit
+def truncate_context_to_token_limit(context, token_limit):
+    """
+    Truncate the context to fit within the token limit by limiting the number of words.
+    Token count is approximated as the word count for simplicity.
+    """
+    words = context.split()
+    truncated_context = " ".join(words[:token_limit])
+    return truncated_context
+    
 # Streamlit App
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
