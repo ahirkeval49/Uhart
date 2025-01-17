@@ -92,6 +92,16 @@ def truncate_context_to_token_limit(context, token_limit):
     truncated_context = " ".join(words[:token_limit])
     return truncated_context
 
+def dynamically_reduce_content(full_prompt, max_tokens=6000):
+    """
+    Dynamically reduce the content of the full prompt until it's within the token limit.
+    Split the context and reduce from the end, as those are likely less relevant.
+    """
+    parts = full_prompt.split()
+    while len(parts) > max_tokens:
+        parts = parts[:-1]  # Remove the last word iteratively
+    return " ".join(parts)
+
 # Streamlit App
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
