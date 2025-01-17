@@ -67,7 +67,7 @@ def preprocess_text(text):
     return text
 
 
-def find_relevant_chunks(question, contexts, threshold=0.5, top_n=3):
+def find_relevant_chunks(question, contexts, threshold=0.3, top_n=3):
     """
     Finds the most relevant chunks based on fuzzy matching and keyword overlap.
     """
@@ -103,8 +103,13 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
         relevant_chunks = find_relevant_chunks(question, contexts)
         best_context = "\n\n".join(relevant_chunks)
 
+        # Debugging: Log context matching process
+        if st.sidebar.checkbox("Show debug info"):
+            st.sidebar.write("Matched Chunks:")
+            st.sidebar.write(best_context if best_context else "No matched chunks found.")
+
         # If no relevant chunks are found, fallback response
-        if not best_context:
+        if not best_context.strip():
             return (
                 "I'm sorry, I couldn't find specific information for your query. "
                 "Please visit the University of Hartford website or contact admissions for further assistance."
