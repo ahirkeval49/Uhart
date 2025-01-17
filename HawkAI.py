@@ -5,6 +5,7 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 import os
 import re
+from difflib import SequenceMatcher
 
 ########################################
 # STREAMLIT CONFIG & STYLING
@@ -43,7 +44,7 @@ def scrape_website(urls):
             # Chunking the text for LLM processing
             text_splitter = CharacterTextSplitter(
                 separator="\n",
-                chunk_size=500,  # Use a smaller chunk size
+                chunk_size=500,  # Use smaller chunks for better context
                 chunk_overlap=50  # Avoid overlap issues
             )
             chunks = text_splitter.split_text(raw_text)
@@ -66,26 +67,25 @@ def preprocess_text(text):
     return text
 
 
-def find_best_context(question, contexts):
+def find_relevant_chunks(question, contexts, threshold=0.5, top_n=3):
     """
-    Finds the most relevant context based on keyword matching.
+    Finds the most relevant chunks based on fuzzy matching and keyword overlap.
     """
     question = preprocess_text(question)
-    best_context = ""
-    max_overlap = 0
+    relevant_chunks = []
 
     for url, chunks in contexts.items():
         for chunk in chunks:
-            # Preprocess the chunk for comparison
             chunk_preprocessed = preprocess_text(chunk)
+            similarity = SequenceMatcher(None, question, chunk_preprocessed).ratio()
+            if similarity >= threshold:
+                relevant_chunks.append((chunk, similarity))
 
-            # Count overlapping keywords
-            overlap = sum(1 for word in question.split() if word in chunk_preprocessed)
-            if overlap > max_overlap:
-                max_overlap = overlap
-                best_context = chunk
+    # Sort by similarity score
+    relevant_chunks = sorted(relevant_chunks, key=lambda x: x[1], reverse=True)
 
-    return best_context if best_context else None
+    # Return the top N chunks
+    return [chunk[0] for chunk in relevant_chunks[:top_n]]
 
 
 def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
@@ -99,10 +99,11 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
             model_name=model
         )
 
-        # Find the best matching context
-        best_context = find_best_context(question, contexts)
+        # Find the most relevant chunks
+        relevant_chunks = find_relevant_chunks(question, contexts)
+        best_context = "\n\n".join(relevant_chunks)
 
-        # If no context is found, use a fallback response
+        # If no relevant chunks are found, fallback response
         if not best_context:
             return (
                 "I'm sorry, I couldn't find specific information for your query. "
