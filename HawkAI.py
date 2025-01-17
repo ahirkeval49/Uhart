@@ -87,22 +87,26 @@ def main():
         with st.spinner("Scraping data..."):
             st.session_state['contexts'] = scrape_website(urls)
 
+    if 'contexts' not in st.session_state or not st.session_state['contexts']:
+        st.error("Failed to load contexts. Please check the scraping process.")
+        return
+
     user_query = st.text_input("Enter your query here:")
     if user_query:
         if st.button("Answer Query"):
-            # Prioritize critical URLs
             prioritized_urls = [
                 "https://www.hartford.edu/academics/graduate-professional-studies/",
                 "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
                 "https://www.hartford.edu/admission/graduate-admission/default.aspx",
                 "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx",
                 "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-programs.aspx",
-                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx",
+                "https://www.hartford.edu/academics/graduate-professional-studies/graduate-student-experience.aspx",
                 "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
                 "https://www.hartford.edu/admission/partnerships/default.aspx",
                 "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
                 "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
             ]
+
             # Find the most relevant chunks for the user's query
             relevant_chunks = find_relevant_chunks(
                 user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=prioritized_urls
