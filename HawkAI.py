@@ -7,7 +7,7 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0.1,
+        temperature=0.1,  # Low temperature to minimize creative generation
         model_name="llama-3.1-8b-instant",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
@@ -40,24 +40,31 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
     total_tokens = 0
     query_token_count = len(query.split()) + 50
     available_tokens = token_limit - query_token_count
-    prioritized_chunks = []
-    other_chunks = []
+    prioritized_chunks_list = []
+    other_chunks_list = []
+
     for url, chunks in contexts.items():
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
             token_count = len(chunk.split())
+            # Categorize chunk as prioritized or not
             if url in prioritized_urls:
-                prioritized_chunks.append((chunk, similarity, token_count))
+                prioritized_chunks_list.append((chunk, similarity, token_count))
             else:
-                other_chunks.append((chunk, similarity, token_count))
-    prioritized_chunks.sort(key=lambda x: x[1], reverse=True)
-    other_chunks.sort(key=lambda x: x[1], reverse=True)
-    for chunk, _, token_count in prioritized_chunks + other_chunks:
+                other_chunks_list.append((chunk, similarity, token_count))
+
+    # Sort by descending similarity
+    prioritized_chunks_list.sort(key=lambda x: x[1], reverse=True)
+    other_chunks_list.sort(key=lambda x: x[1], reverse=True)
+
+    # Add prioritized chunks first, then others, until token limit is reached
+    for chunk, _, token_count in prioritized_chunks_list + other_chunks_list:
         if total_tokens + token_count <= available_tokens:
             relevant_chunks.append(chunk)
             total_tokens += token_count
         else:
             break
+
     return relevant_chunks
 
 def truncate_context_to_token_limit(context, max_tokens):
@@ -135,24 +142,48 @@ def main():
         return
 
     user_query = st.text_input("Enter your query here:")
-    if user_query and st.button("Answer Query"):
+     if user_query and st.button("Answer Query"):
         try:
-            # Find the most relevant chunks for the user's query
             relevant_chunks = find_relevant_chunks(
-                user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=urls
+                user_query, 
+                st.session_state['contexts'], 
+                token_limit=6000, 
+                prioritized_urls=urls
             )
+
+            # If no relevant chunks are found, provide a fallback response immediately
+            if not relevant_chunks:
+                fallback_message = (
+                    "I am sorry but I am unable to answer your amazing questions. "
+                    "Please reach out to Grad Study at gradstudy@hartford.edu."
+                )
+                st.markdown(f"**Response:** {fallback_message}")
+                return
+
             context_to_send = "\n\n".join(relevant_chunks)
             context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
 
-            # Initialize Groq model
-            groq_model = initialize_groq_model()
+            # Prompt instructing the model to ONLY answer from provided context
+            prompt = f"""
+You are Hawk AI, an assistant for University of Hartford Graduate Admissions. 
+You have the following context from official university pages. 
+If the answer to the user's query is NOT found in the context, respond with:
 
-            # Generate a response using Groq LLM
-            response = groq_model.invoke(
-                f"You are Hawk AI, an assistant for University of Hartford Graduate Admissions. Use the following context to answer questions:\n\n{context_to_send}\n\nQuestion: {user_query}",
-                timeout=30
-            )
-            st.markdown(f"**Response:** {response.content.strip()}")
+"I am sorry but I am unable to answer your amazing questions. 
+Please reach out to Grad Study at gradstudy@hartford.edu."
+
+Context:
+{context_to_send}
+
+User Query: {user_query}
+"""
+
+            groq_model = initialize_groq_model()
+            response = groq_model.invoke(prompt, timeout=30)
+
+            final_answer = response.content.strip()
+            st.markdown(f"**Response:** {final_answer}")
+
         except Exception as e:
             st.error(f"Error generating response: {e}")
 
