@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-from langchain_groq import ChatGroq  # Correct import for Groq integration
+from langchain_groq import ChatGroq
+from difflib import SequenceMatcher
 
 # Define function to initialize the Groq model
 def initialize_groq_model():
@@ -22,10 +23,10 @@ def scrape_website(urls):
     url_contexts = {}
     for url in urls:
         try:
-            response = requests.get(url, headers=headers, timeout=10)  # Set timeout for requests
+            response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                text = ' '.join(soup.stripped_strings)  # Clean text by removing extra whitespace
+                text = ' '.join(soup.stripped_strings)
                 chunks = simple_text_split(text)
                 url_contexts[url] = chunks
             else:
@@ -33,6 +34,17 @@ def scrape_website(urls):
         except requests.exceptions.RequestException as e:
             st.error(f"Error scraping {url}: {e}")
     return url_contexts
+
+# Function to find relevant chunks based on user query
+def find_relevant_chunks(query, contexts, max_chunks=5):
+    relevant_chunks = []
+    for url, chunks in contexts.items():
+        for chunk in chunks:
+            similarity = SequenceMatcher(None, query, chunk).ratio()
+            relevant_chunks.append((chunk, similarity))
+    # Sort chunks by similarity and select top N
+    relevant_chunks = sorted(relevant_chunks, key=lambda x: x[1], reverse=True)
+    return [chunk[0] for chunk in relevant_chunks[:max_chunks]]
 
 # Streamlit App
 def main():
