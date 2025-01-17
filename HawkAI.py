@@ -90,7 +90,7 @@ urls = [
 ]
 
     # Automatic scraping on app load
-        if 'contexts' not in st.session_state:
+if 'contexts' not in st.session_state:
         st.session_state['contexts'] = scrape_website(urls)
 
     user_query = st.text_input("Enter your query here:")
