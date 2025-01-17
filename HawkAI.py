@@ -1,5 +1,5 @@
 import streamlit as st
-from langchain.document_loaders import WebBaseLoader
+from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
@@ -19,6 +19,9 @@ footer {visibility: hidden;}
 """
 st.markdown(HIDE_FOOTER, unsafe_allow_html=True)
 
+# Set USER_AGENT environment variable for web scraping
+os.environ["USER_AGENT"] = "HawkAI/1.0 (+https://www.hartford.edu)"
+
 ########################################
 # HELPER FUNCTIONS
 ########################################
@@ -37,7 +40,11 @@ def scrape_website(urls):
             raw_text = "\n".join([doc.page_content for doc in documents])
 
             # Chunking the text for LLM processing
-            text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+            text_splitter = CharacterTextSplitter(
+                separator="\n",
+                chunk_size=500,  # Use a smaller chunk size to avoid warnings
+                chunk_overlap=50  # Avoid overlap issues
+            )
             chunks = text_splitter.split_text(raw_text)
 
             # Store chunks for each URL
@@ -111,10 +118,6 @@ def main():
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
         "https://www.hartford.edu/admission/partnerships/default.aspx",
     ]
-
-    st.sidebar.info("Scraping content from these URLs:")
-    for url in urls:
-        st.sidebar.write(f"- [{url}]({url})")
 
     # Retrieve Groq API key
     groq_api_key = st.secrets["general"]["GROQ_API_KEY"]
