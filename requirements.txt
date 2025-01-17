@@ -11,3 +11,5 @@ lxml
 faiss-cpu
 openai
 requests
+fuzzywuzzy
+python-Levenshtein
