@@ -109,14 +109,10 @@ def main():
 
     # Critical URLs to scrape
     urls = [
-        "https://www.hartford.edu/academics/graduate-professional-studies/",
         "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
         "https://www.hartford.edu/admission/graduate-admission/default.aspx",
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx",
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-programs.aspx",
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx",
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
-        "https://www.hartford.edu/admission/partnerships/default.aspx",
         "https://www.hartford.edu/admission/graduate-admission/financing-grad-education.aspx",
         "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx",
     ]
