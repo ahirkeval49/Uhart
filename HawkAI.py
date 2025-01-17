@@ -1,8 +1,6 @@
 import streamlit as st
 from langchain_community.document_loaders import WebBaseLoader
 from langchain.text_splitter import CharacterTextSplitter
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.vectorstores import FAISS
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 import os
@@ -29,50 +27,57 @@ os.environ["USER_AGENT"] = "HawkAI/1.0 (+https://www.hartford.edu)"
 ########################################
 
 @st.cache_data(show_spinner=True)
-def scrape_and_index_website(urls):
+def scrape_website(urls):
     """
-    Scrapes the provided URLs, extracts the text, and indexes the chunks using FAISS.
+    Scrapes the provided URLs, extracts the text, and splits it into manageable chunks.
     """
     try:
-        # Scraping and text chunking
-        raw_texts = []
+        url_contexts = {}
         for url in urls:
+            # Load website content
             loader = WebBaseLoader(url)
             documents = loader.load()
             raw_text = "\n".join([doc.page_content for doc in documents])
-            
-            # Split the raw text into chunks
-            text_splitter = CharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+
+            # Chunking the text for LLM processing
+            text_splitter = CharacterTextSplitter(
+                separator="\n",
+                chunk_size=500,  # Use a smaller chunk size
+                chunk_overlap=50  # Avoid overlap issues
+            )
             chunks = text_splitter.split_text(raw_text)
-            raw_texts.extend(chunks)
 
-        # Generate embeddings and create a FAISS index
-        embeddings = OpenAIEmbeddings(openai_api_key=st.secrets["openai"]["API_KEY"])
-        faiss_index = FAISS.from_texts(raw_texts, embeddings)
+            # Store chunks for each URL
+            url_contexts[url] = chunks
 
-        return faiss_index
+        return url_contexts
     except Exception as e:
-        st.error(f"Error during website scraping or indexing: {e}")
-        return None
+        st.error(f"Error scraping website: {e}")
+        return {}
 
 
-def ask_groq_with_embeddings(question, faiss_index, groq_api_key, model="llama-3.1-70b-versatile"):
+def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
     """
-    Sends the user's question and the most relevant context from FAISS to the Groq LLM.
+    Sends the user's question and the most relevant context to the Groq LLM.
     """
     try:
-        # Retrieve top 3 most relevant chunks using FAISS
-        relevant_chunks = faiss_index.similarity_search(question, k=3)
-        best_context = "\n\n".join([chunk.page_content for chunk in relevant_chunks])
-
-        # Initialize Groq LLM
         llm = ChatGroq(
             temperature=0.2,
             groq_api_key=groq_api_key,
             model_name=model
         )
 
-        # Prompt with context
+        # Select the most relevant context manually
+        best_context = ""
+        for url, chunks in contexts.items():
+            for chunk in chunks:
+                if question.lower() in chunk.lower():  # Keyword search
+                    best_context += chunk + "\n\n"
+
+        if not best_context:  # Fallback to the first URL's chunks if no match
+            best_context = "\n\n".join(contexts.get(list(contexts.keys())[0], []))
+
+        # Prompt template
         prompt = PromptTemplate.from_template("""
         You are Hawk AI, an intelligent assistant representing the University of Hartford Graduate Admissions.
         The following is context scraped from the official website:
@@ -115,12 +120,12 @@ def main():
         "https://www.hartford.edu/about/offices-divisions/finance-administration/financial-affairs/bursar-office/tuition-fees/graduate-tuition.aspx"
     ]
 
-    # Retrieve Groq and OpenAI API keys
+    # Retrieve Groq API key
     groq_api_key = st.secrets["general"]["GROQ_API_KEY"]
 
-    # Scrape and index website content
-    with st.spinner("Scraping and indexing website content..."):
-        faiss_index = scrape_and_index_website(urls)
+    # Cache and scrape website content
+    with st.spinner("Scraping website content..."):
+        contexts = scrape_website(urls)
 
     # User Query Input
     user_query = st.text_input("Ask me a question about Graduate Admissions:", "")
@@ -129,7 +134,7 @@ def main():
             st.warning("Please enter a question.")
         else:
             # Generate an answer based on the most relevant context
-            response = ask_groq_with_embeddings(user_query, faiss_index, groq_api_key)
+            response = ask_groq(user_query, contexts, groq_api_key)
 
             # Display the conversation
             st.write("---")
