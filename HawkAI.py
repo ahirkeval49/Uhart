@@ -48,6 +48,11 @@ def scrape_website(urls):
             )
             chunks = text_splitter.split_text(raw_text)
 
+            # Log chunk sizes for debugging
+            for idx, chunk in enumerate(chunks):
+                if len(chunk) > 500:
+                    print(f"Chunk {idx + 1} exceeds size limit: {len(chunk)}")
+
             # Store chunks for each URL
             url_contexts[url] = chunks
 
@@ -101,6 +106,11 @@ def ask_groq(question, contexts, groq_api_key, model="llama-3.1-70b-versatile"):
         # Find the most relevant chunks
         relevant_chunks = find_relevant_chunks(question, contexts)
         best_context = "\n\n".join(relevant_chunks)
+
+        # Debugging: Log context matching process
+        if st.sidebar.checkbox("Show debug info"):
+            st.sidebar.write("Matched Chunks:")
+            st.sidebar.write(relevant_chunks)
 
         # If no relevant chunks are found, fallback response
         if not best_context.strip():
