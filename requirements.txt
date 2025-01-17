@@ -8,3 +8,6 @@ pypdf
 PyPDF2
 beautifulsoup4
 lxml
+faiss-cpu
+openai
+requests
