@@ -35,34 +35,54 @@ def scrape_website(urls):
             st.error(f"Error scraping {url}: {e}")
     return url_contexts
 
-# Function to find relevant chunks based on user query
-def find_relevant_chunks(query, contexts, token_limit=1000):
+def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=None):
+    """
+    Finds the most relevant chunks based on the query, with prioritization for certain URLs
+    and ensuring the total token count does not exceed the limit.
+    """
+    prioritized_urls = prioritized_urls or []  # Default to an empty list if not provided
     relevant_chunks = []
     total_tokens = 0
-    
-   # Approximate token count for the query and prompt text
-    query_token_count = len(query.split()) + 50  # Extra 50 tokens for prompt text
+
+    # Approximate token count for the query and prompt text
+    query_token_count = len(query.split()) + 50  # Reserve 50 tokens for prompt overhead
     available_tokens = token_limit - query_token_count
-    
+
+    # Separate chunks into prioritized and non-prioritized
+    prioritized_chunks = []
+    other_chunks = []
+
     for url, chunks in contexts.items():
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
             token_count = len(chunk.split())  # Approximate token count by word count
-            relevant_chunks.append((chunk, similarity, token_count))
+            if url in prioritized_urls:
+                prioritized_chunks.append((chunk, similarity, token_count))
+            else:
+                other_chunks.append((chunk, similarity, token_count))
 
     # Sort chunks by similarity
-    relevant_chunks = sorted(relevant_chunks, key=lambda x: x[1], reverse=True)
+    prioritized_chunks = sorted(prioritized_chunks, key=lambda x: x[1], reverse=True)
+    other_chunks = sorted(other_chunks, key=lambda x: x[1], reverse=True)
 
-    # Dynamically add chunks until token limit is reached
-    selected_chunks = []
-    for chunk, _, token_count in relevant_chunks:
-        if total_tokens + token_count <= token_limit:
-            selected_chunks.append(chunk)
+    # Add prioritized chunks first
+    for chunk, _, token_count in prioritized_chunks:
+        if total_tokens + token_count <= available_tokens:
+            relevant_chunks.append(chunk)
             total_tokens += token_count
         else:
             break
 
-    return selected_chunks
+    # Add other chunks if space allows
+    for chunk, _, token_count in other_chunks:
+        if total_tokens + token_count <= available_tokens:
+            relevant_chunks.append(chunk)
+            total_tokens += token_count
+        else:
+            break
+
+    return relevant_chunks
+
 # Streamlit App
 def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
