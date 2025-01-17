@@ -37,7 +37,7 @@ def scrape_website(urls):
         url_contexts = {}
         for url in urls:
             # Load website content
-            loader = WebBaseLoader(url, headers={"User-Agent": os.environ["USER_AGENT"]})
+            loader = WebBaseLoader(url)
             documents = loader.load()
             raw_text = "\n".join([doc.page_content for doc in documents])
 
