@@ -102,15 +102,16 @@ def main():
     st.write("I am Howie AI, how can I assist you today?")
 
     # URLs for scraping
-    urls = [ 
-        "https://www.hartford.edu/admission/graduate-admission/default.aspx"
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/", 
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-programs.aspxs",  
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx" 
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx"
-        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx"
-        "https://www.hartford.edu/admission/partnerships/default.aspx"
+    urls = [
+        "https://www.hartford.edu/admission/graduate-admission/default.aspx",
+        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/",
+        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-programs.aspx",
+        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx",
+        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx",
+        "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/resources.aspx",
+        "https://www.hartford.edu/admission/partnerships/default.aspx",
     ]
+
     st.sidebar.info("Scraping content from these URLs:")
     for url in urls:
         st.sidebar.write(f"- [{url}]({url})")
