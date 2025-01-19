@@ -165,15 +165,17 @@ Directly answer inquiries about graduate and doctoral programs using this data.
 Do not extrapolate or create responses beyond the explicit content available. 
 If a query cannot be directly answered with the provided information, politely suggest the user contact Grad Study for more comprehensive support.
 
-Context:
-{context_to_send}
 
-User Query: {user_query}
 
 If the context does not contain a direct answer:
 I apologize, but I cannot find a specific answer to your question. 
 Please contact gradstudy@hartford.edu for more detailed information regarding your inquiry.
 """
+            Context:
+{context_to_send}
+
+User Query: {user_query}
+
             groq_model = initialize_groq_model()
             response = groq_model.invoke(prompt, timeout=30)
             final_answer = response.content.strip()
