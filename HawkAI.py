@@ -175,7 +175,7 @@ User Query: {user_query}
 If the context does not contain a direct answer:
 I apologize, but I cannot find a specific answer to your question. 
 Please contact gradstudy@hartford.edu for more detailed information regarding your inquiry.
-"""
+
 
 Context:
 {context_to_send}
