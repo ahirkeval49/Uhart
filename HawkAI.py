@@ -7,12 +7,12 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0,  # Low temperature to minimize creative generation
+        temperature=0,  # Set to zero to minimize creativity
         model_name="llama-3.1-8b-instant",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
 
-# Simple text splitting function
+# Function to split text into manageable chunks
 def simple_text_split(text, chunk_size=500):
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
@@ -47,17 +47,14 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
             token_count = len(chunk.split())
-            # Categorize chunk as prioritized or not
             if url in prioritized_urls:
                 prioritized_chunks_list.append((chunk, similarity, token_count))
             else:
                 other_chunks_list.append((chunk, similarity, token_count))
 
-    # Sort by descending similarity
     prioritized_chunks_list.sort(key=lambda x: x[1], reverse=True)
     other_chunks_list.sort(key=lambda x: x[1], reverse=True)
 
-    # Add prioritized chunks first, then others, until token limit is reached
     for chunk, _, token_count in prioritized_chunks_list + other_chunks_list:
         if total_tokens + token_count <= available_tokens:
             relevant_chunks.append(chunk)
@@ -131,46 +128,32 @@ def main():
 
     ]
 
-    # Automatic scraping on app load
+     # Automatic scraping on app load
     if 'contexts' not in st.session_state:
         with st.spinner("Scraping data..."):
             st.session_state['contexts'] = scrape_website(urls)
 
-    # Validate contexts
-    if 'contexts' not in st.session_state or not st.session_state['contexts']:
-        st.error("No contexts available for processing. Scraping might have failed.")
-        return
-
     user_query = st.text_input("Enter your query here:")
     if user_query and st.button("Answer Query"):
-        try:
-            relevant_chunks = find_relevant_chunks(
-                user_query, 
-                st.session_state['contexts'], 
-                token_limit=6000, 
-                prioritized_urls=urls
-            )
+        relevant_chunks = find_relevant_chunks(
+            user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=urls
+        )
 
-            # If no relevant chunks are found, provide a fallback response immediately
-            if not relevant_chunks:
-                fallback_message = (
-                    "I am sorry but I am unable to answer your amazing questions. "
-                    "Please reach out to Grad Study at gradstudy@hartford.edu."
-                )
-                st.markdown(f"**Response:** {fallback_message}")
-                return
+        if not relevant_chunks:
+            fallback_message = "I am sorry but I am unable to answer your amazing questions. Please reach out to Grad Study at gradstudy@hartford.edu."
+            st.markdown(f"**Response:** {fallback_message}")
+            return
 
-            context_to_send = "\n\n".join(relevant_chunks)
-            context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
+        context_to_send = "\n\n".join(relevant_chunks)
+        context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
 
-            # Prompt instructing the model to ONLY answer from provided context
-            prompt = f"""
+        prompt = f"""
 You are Hawk AI, an assistant for University of Hartford Graduate Admissions. 
 You have the following context from official university pages. 
 If the answer to the user's query is NOT found in the context, respond with:
 
-#"I am sorry but I am unable to answer your amazing questions. 
-Please reach out to Grad Study at gradstudy@hartford.edu."
+'I am sorry but I am unable to answer your amazing questions. 
+Please reach out to Grad Study at gradstudy@hartford.edu.'
 
 Context:
 {context_to_send}
@@ -178,14 +161,11 @@ Context:
 User Query: {user_query}
 """
 
-            groq_model = initialize_groq_model()
-            response = groq_model.invoke(prompt, timeout=30)
+        groq_model = initialize_groq_model()
+        response = groq_model.invoke(prompt, timeout=30)
 
-            final_answer = response.content.strip()
-            st.markdown(f"**Response:** {final_answer}")
-
-        except Exception as e:
-            st.error(f"Error generating response: {e}")
+        final_answer = response.content.strip()
+        st.markdown(f"**Response:** {final_answer}")
 
 if __name__ == "__main__":
     main()
