@@ -184,7 +184,7 @@ User Query: {user_query}
 """
 
     groq_model = initialize_groq_model()
-    response = groq_model.invoke(prompt, timeout=30)
+     response = groq_model.invoke(prompt, timeout=30)
 
         # Format the final answer with source URLs
         final_answer = response.content.strip() 
