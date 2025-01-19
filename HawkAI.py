@@ -178,7 +178,7 @@ User Query: {user_query}
         response = groq_model.invoke(prompt, timeout=30)
 
         # Format the final answer with source URLs
-        final_answer = response.content.strip() + "\n\nSource URL(s): " + ", ".join(source_urls)
+        final_answer = response.content.strip() 
         st.markdown(f"**Response:** {final_answer}")
 
 if __name__ == "__main__":
