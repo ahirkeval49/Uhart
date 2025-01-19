@@ -182,7 +182,7 @@ Context:
 
 User Query: {user_query}
 """
-            groq_model = initialize_groq_model()
+        groq_model = initialize_groq_model()
             response = groq_model.invoke(prompt, timeout=30)
 
             final_answer = response.content.strip()
