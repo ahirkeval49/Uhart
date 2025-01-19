@@ -7,12 +7,12 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0,  # Set to zero to minimize creativity
+        temperature=0,  # Low temperature to minimize creative generation
         model_name="llama-3.1-8b-instant",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
 
-# Function to split text into manageable chunks
+# Simple text splitting function
 def simple_text_split(text, chunk_size=500):
     return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
 
@@ -37,6 +37,7 @@ def scrape_website(urls):
 def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=None):
     prioritized_urls = prioritized_urls or []
     relevant_chunks = []
+    source_urls = []
     total_tokens = 0
     query_token_count = len(query.split()) + 50
     available_tokens = token_limit - query_token_count
@@ -47,14 +48,19 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
             token_count = len(chunk.split())
+            # Categorize chunk as prioritized or not
             if url in prioritized_urls:
                 prioritized_chunks_list.append((chunk, similarity, token_count))
+                if similarity > 0.2:  # Adjust this threshold as needed
+                    source_urls.append(url)
             else:
                 other_chunks_list.append((chunk, similarity, token_count))
 
+    # Sort by descending similarity
     prioritized_chunks_list.sort(key=lambda x: x[1], reverse=True)
     other_chunks_list.sort(key=lambda x: x[1], reverse=True)
 
+    # Add prioritized chunks first, then others, until token limit is reached
     for chunk, _, token_count in prioritized_chunks_list + other_chunks_list:
         if total_tokens + token_count <= available_tokens:
             relevant_chunks.append(chunk)
@@ -62,7 +68,7 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
         else:
             break
 
-    return relevant_chunks
+    return relevant_chunks, source_urls
 
 def truncate_context_to_token_limit(context, max_tokens):
     words = context.split()
