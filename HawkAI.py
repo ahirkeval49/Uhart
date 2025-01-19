@@ -139,14 +139,21 @@ def main():
         with st.spinner("Scraping data..."):
             st.session_state['contexts'] = scrape_website(urls)
 
-    user_query = st.text_input("Enter your query here:")
+   user_query = st.text_input("Enter your query here:")
     if user_query and st.button("Answer Query"):
-        relevant_chunks = find_relevant_chunks(
-            user_query, st.session_state['contexts'], token_limit=6000, prioritized_urls=urls
+        relevant_chunks, source_urls = find_relevant_chunks(
+            user_query, 
+            st.session_state['contexts'], 
+            token_limit=6000, 
+            prioritized_urls=[url for url in st.session_state['contexts']]
         )
 
+        # If no relevant chunks are found, provide a fallback response immediately
         if not relevant_chunks:
-            fallback_message = "I am sorry but I am unable to answer your amazing questions. Please reach out to Grad Study at gradstudy@hartford.edu."
+            fallback_message = (
+                "I am sorry but I am unable to answer your amazing questions. "
+                "Please reach out to Grad Study at gradstudy@hartford.edu."
+            )
             st.markdown(f"**Response:** {fallback_message}")
             return
 
@@ -158,8 +165,8 @@ You are Hawk AI, an assistant for University of Hartford Graduate Admissions.
 You have the following context from official university pages. 
 If the answer to the user's query is NOT found in the context, respond with:
 
-'I am sorry but I am unable to answer your amazing questions. 
-Please reach out to Grad Study at gradstudy@hartford.edu.'
+#"I am sorry but I am unable to answer your amazing questions. 
+Please reach out to Grad Study at gradstudy@hartford.edu."
 
 Context:
 {context_to_send}
@@ -170,7 +177,7 @@ User Query: {user_query}
         groq_model = initialize_groq_model()
         response = groq_model.invoke(prompt, timeout=30)
 
-        final_answer = response.content.strip()
+        final_answer = response.content.strip() + "\n\nSource URL(s): " + ", ".join(source_urls)
         st.markdown(f"**Response:** {final_answer}")
 
 if __name__ == "__main__":
