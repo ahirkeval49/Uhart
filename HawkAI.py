@@ -182,16 +182,16 @@ Context:
 
 User Query: {user_query}
 """
-try:
-    response = groq_model.invoke(prompt, timeout=30)
-    final_answer = response.content.strip() 
-    st.markdown(f"**Response:** {final_answer}")
-except groq.APIStatusError as e:
-    st.error("There was an issue connecting to the Groq API. Please try again later.")
-    logging.error(f"Groq APIStatusError: {e}")
-except Exception as e:
-    st.error("An unexpected error occurred.")
-    logging.error(f"Unexpected error: {e}")
+            groq_model = initialize_groq_model()
+            response = groq_model.invoke(prompt, timeout=30)
+
+            final_answer = response.content.strip()
+            st.markdown(f"**Response:** {final_answer}")
+
+        except Exception as e:
+            st.error(f"Error generating response: {e}")
+
 if __name__ == "__main__":
     main()
+
 
