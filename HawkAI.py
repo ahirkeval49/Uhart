@@ -48,22 +48,21 @@ def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=Non
         for chunk in chunks:
             similarity = SequenceMatcher(None, query, chunk).ratio()
             token_count = len(chunk.split())
-            # Categorize chunk as prioritized or not
+            # Categorize chunk as prioritized or not, keep track of URL
             if url in prioritized_urls:
-                prioritized_chunks_list.append((chunk, similarity, token_count))
-                if similarity > 0.2:  # Adjust this threshold as needed
-                    source_urls.append(url)
+                prioritized_chunks_list.append((chunk, similarity, token_count, url))
             else:
-                other_chunks_list.append((chunk, similarity, token_count))
+                other_chunks_list.append((chunk, similarity, token_count, url))
 
     # Sort by descending similarity
     prioritized_chunks_list.sort(key=lambda x: x[1], reverse=True)
     other_chunks_list.sort(key=lambda x: x[1], reverse=True)
 
     # Add prioritized chunks first, then others, until token limit is reached
-    for chunk, _, token_count in prioritized_chunks_list + other_chunks_list:
+    for chunk, _, token_count, url in prioritized_chunks_list + other_chunks_list:
         if total_tokens + token_count <= available_tokens:
             relevant_chunks.append(chunk)
+            source_urls.append(url)
             total_tokens += token_count
         else:
             break
@@ -139,7 +138,7 @@ def main():
         with st.spinner("Scraping data..."):
             st.session_state['contexts'] = scrape_website(urls)
 
-    user_query = st.text_input("Enter your query here:")
+     user_query = st.text_input("Enter your query here:")
     if user_query and st.button("Answer Query"):
         relevant_chunks, source_urls = find_relevant_chunks(
             user_query, 
@@ -160,12 +159,13 @@ def main():
         context_to_send = "\n\n".join(relevant_chunks)
         context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
 
+        # Build a prompt that restricts the model to answer only based on the provided context
         prompt = f"""
 You are Hawk AI, an assistant for University of Hartford Graduate Admissions. 
 You have the following context from official university pages. 
 If the answer to the user's query is NOT found in the context, respond with:
 
-#"I am sorry but I am unable to answer your amazing questions. 
+"I am sorry but I am unable to answer your amazing questions. 
 Please reach out to Grad Study at gradstudy@hartford.edu."
 
 Context:
@@ -177,6 +177,7 @@ User Query: {user_query}
         groq_model = initialize_groq_model()
         response = groq_model.invoke(prompt, timeout=30)
 
+        # Format the final answer with source URLs
         final_answer = response.content.strip() + "\n\nSource URL(s): " + ", ".join(source_urls)
         st.markdown(f"**Response:** {final_answer}")
 
