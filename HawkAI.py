@@ -182,13 +182,12 @@ Context:
 
 User Query: {user_query}
 """
-        groq_model = initialize_groq_model()
-        response = groq_model.invoke(prompt, timeout=30)
-
-        final_answer = response.content.strip()
-        st.markdown(f"**Response:** {final_answer}")
-
-         except Exception as e:
+try:
+            groq_model = initialize_groq_model()
+            response = groq_model.invoke(prompt, timeout=30)
+            final_answer = response.content.strip()
+            st.markdown(f"**Response:** {final_answer}")
+        except Exception as e:
             st.error(f"Error generating response: {e}")
 
 if __name__ == "__main__":
