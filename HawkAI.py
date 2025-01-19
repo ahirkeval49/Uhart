@@ -187,8 +187,8 @@ User Query: {user_query}
     final_answer = response.content.strip()
     st.markdown(f"**Response:** {final_answer}")
     
-except Exception as e:  
-            st.error(f"Error generating response: {e}")
+    except Exception as e:  
+    st.error(f"Error generating response: {e}")
 
 if __name__ == "__main__":
     main()
