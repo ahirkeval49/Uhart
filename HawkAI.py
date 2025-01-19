@@ -138,7 +138,7 @@ def main():
         with st.spinner("Scraping data..."):
             st.session_state['contexts'] = scrape_website(urls)
 
-     user_query = st.text_input("Enter your query here:")
+      user_query = st.text_input("Enter your query here:")
     if user_query and st.button("Answer Query"):
         relevant_chunks, source_urls = find_relevant_chunks(
             user_query, 
