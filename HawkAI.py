@@ -167,7 +167,7 @@ def main():
             return
 
         context_to_send = "\n\n".join(relevant_chunks)
-        context_to_send = truncate_context_to_token_limit(context_to_send, 6000)
+        context_to_send = truncate_context_to_token_limit(context_to_send, 3000)
 
         prompt = f"""
 You are Hawk AI, assisting with inquiries about the University of Hartford Graduate Admissions. 
