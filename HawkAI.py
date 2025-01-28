@@ -46,7 +46,7 @@ def scrape_website(urls):
             st.error(f"Error scraping {url}: {e}")
     return url_contexts
 
-def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=None):
+def find_relevant_chunks(query, contexts, token_limit=3000, prioritized_urls=None):
     prioritized_urls = prioritized_urls or []
     relevant_chunks = []
     source_urls = []
@@ -167,7 +167,7 @@ def main():
             return
 
         context_to_send = "\n\n".join(relevant_chunks)
-        context_to_send = truncate_context_to_token_limit(context_to_send, 5000)
+        context_to_send = truncate_context_to_token_limit(context_to_send, 3000)
 
         prompt = f"""
 You are Hawk AI, assisting with inquiries about the University of Hartford Graduate Admissions. 
