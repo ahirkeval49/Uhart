@@ -142,7 +142,7 @@ def main():
         # URLs list continues...
     ]
 
-   valid_urls = validate_urls(urls)
+    valid_urls = validate_urls(urls)
     
     if 'contexts' not in st.session_state:
         with st.spinner("Scraping data..."):
