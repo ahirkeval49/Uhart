@@ -10,7 +10,7 @@ from difflib import SequenceMatcher
 def initialize_groq_model():
     return ChatGroq(
         temperature=0.2,  # Low temperature to minimize creative generation
-        model_name="llama3-8b-8192",
+        model_name="llama-3.1-8b-instant",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
 
@@ -160,7 +160,7 @@ def main():
 
         if not relevant_chunks:
             fallback_message = (
-                "I am sorry but I am unable to answer your amazing questions. "
+                "I am sorry but I am unable to answer your amazing question. "
                 "Please reach out to Grad Study at gradstudy@hartford.edu."
             )
             st.markdown(f"**Response:** {fallback_message}")
