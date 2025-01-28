@@ -46,7 +46,7 @@ def scrape_website(urls):
             st.error(f"Error scraping {url}: {e}")
     return url_contexts
 
-def find_relevant_chunks(query, contexts, token_limit=6000, prioritized_urls=None):
+def find_relevant_chunks(query, contexts, token_limit=4000, prioritized_urls=None):
     prioritized_urls = prioritized_urls or []
     relevant_chunks = []
     source_urls = []
