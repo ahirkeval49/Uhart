@@ -205,5 +205,10 @@ User Query: {user_query}
     for role, message in st.session_state['conversation_history']:
         st.markdown(f"**{role}:** {message}")
 
+   # Display conversation history
+    st.subheader("Conversation History")
+    for role, message in st.session_state['conversation_history']:
+        st.markdown(f"**{role}:** {message}")
+
 if __name__ == "__main__":
     main()
