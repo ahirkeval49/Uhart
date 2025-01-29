@@ -5,7 +5,6 @@ from bs4 import BeautifulSoup
 from langchain_groq import ChatGroq
 from difflib import SequenceMatcher
 
-
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
@@ -88,6 +87,17 @@ def main():
     st.title("🦅 Hawk AI: Your Admissions Assistant")
     st.write("I am Howie AI, how can I assist you today?")
 
+    # Add disclaimer in the sidebar
+    st.sidebar.markdown("""
+    **Disclaimer:**  
+    The responses are generated through AI. If in doubt, reach out to Grad Admission at [gradstudy@hartford.edu](mailto:gradstudy@hartford.edu),  
+    Call or WhatsApp at [860.768.4371](tel:8607684371).
+    """)
+
+    # Initialize conversation history in session state
+    if 'conversation_history' not in st.session_state:
+        st.session_state['conversation_history'] = []
+
     # Critical URLs to scrape
     urls = [ 
         "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
@@ -139,8 +149,6 @@ def main():
         "https://www.hartford.edu/academics/graduate-professional-studies/",
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/information-sessions/default.aspx",
         "https://www.hartford.edu/academics/graduate-professional-studies/graduate-studies/graduate-student-experience.aspx", 
-
-        # URLs list continues...
     ]
 
     valid_urls = validate_urls(urls)
@@ -164,6 +172,8 @@ def main():
                 "Please reach out to Grad Study at gradstudy@hartford.edu."
             )
             st.markdown(f"**Response:** {fallback_message}")
+            st.session_state['conversation_history'].append(("User", user_query))
+            st.session_state['conversation_history'].append(("Hawk AI", fallback_message))
             return
 
         context_to_send = "\n\n".join(relevant_chunks)
@@ -185,6 +195,15 @@ User Query: {user_query}
         response = groq_model.invoke(prompt, timeout=30)
         final_answer = response.content.strip()
         st.markdown(f"**Response:** {final_answer}")
+
+        # Update conversation history
+        st.session_state['conversation_history'].append(("User", user_query))
+        st.session_state['conversation_history'].append(("Hawk AI", final_answer))
+
+    # Display conversation history
+    st.subheader("Conversation History")
+    for role, message in st.session_state['conversation_history']:
+        st.markdown(f"**{role}:** {message}")
 
 if __name__ == "__main__":
     main()
