@@ -97,7 +97,15 @@ def main():
     # Initialize conversation history in session state
     if 'conversation_history' not in st.session_state:
         st.session_state['conversation_history'] = []
-
+    # Add buttons to clear conversation history
+    if st.sidebar.button("Clear Conversation"):
+        st.session_state['conversation_history'] = []
+        st.success("Conversation history cleared!")
+    
+    if st.sidebar.button("Delete All Conversations"):
+        del st.session_state['conversation_history']
+        st.session_state['conversation_history'] = []
+        st.success("All conversations deleted!")
     # Critical URLs to scrape
     urls = [ 
         "https://www.hartford.edu/academics/graduate-professional-studies/about-graduate-and-professional-studies.aspx",
@@ -205,10 +213,7 @@ User Query: {user_query}
     for role, message in st.session_state['conversation_history']:
         st.markdown(f"**{role}:** {message}")
 
-   # Display conversation history
-    st.subheader("Conversation History")
-    for role, message in st.session_state['conversation_history']:
-        st.markdown(f"**{role}:** {message}")
+  
 
 if __name__ == "__main__":
     main()
