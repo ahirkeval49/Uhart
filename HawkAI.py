@@ -199,29 +199,27 @@ Context:
 
 User Query: {user_query}
 """
-    # Modify the response processing section (around line 183):
-    groq_model= initialize_groq_model()
-    response = groq_model.invoke(prompt, timeout=30)
-    raw_content = response.content.strip()
+        # Moved INSIDE the button click block
+        groq_model = initialize_groq_model()
+        response = groq_model.invoke(prompt, timeout=30)
+        raw_content = response.content.strip()
 
-    # Add this processing step to remove the <think> section
-    if '</think>' in raw_content:
-        final_answer = raw_content.split('</think>', 1)[-1].strip()
-    else:
-        final_answer = raw_content  # Fallback in case formatting changes
+        # Process response to remove <think> section
+        if '</think>' in raw_content:
+            final_answer = raw_content.split('</think>', 1)[-1].strip()
+        else:
+            final_answer = raw_content  # Fallback
 
-    st.markdown(f"**Response:** {final_answer}")
+        st.markdown(f"**Response:** {final_answer}")
 
-    # Update conversation history with clean answer
-    st.session_state['conversation_history'].append(("User", user_query))
-    st.session_state['conversation_history'].append(("Hawk AI", final_answer))
+        # Update conversation history
+        st.session_state['conversation_history'].append(("User", user_query))
+        st.session_state['conversation_history'].append(("Hawk AI", final_answer))
 
-    # Display conversation history
+    # Display conversation history (OUTSIDE the button click block)
     st.subheader("Conversation History")
     for role, message in st.session_state['conversation_history']:
         st.markdown(f"**{role}:** {message}")
-
-  
 
 if __name__ == "__main__":
     main()
