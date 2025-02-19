@@ -200,6 +200,7 @@ Context:
 User Query: {user_query}
 """
     # Modify the response processing section (around line 183):
+    groq_model= initiate_groq_model()
     response = groq_model.invoke(prompt, timeout=30)
     raw_content = response.content.strip()
 
