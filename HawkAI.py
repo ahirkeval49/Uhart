@@ -8,7 +8,7 @@ from difflib import SequenceMatcher
 # Define function to initialize the Groq model
 def initialize_groq_model():
     return ChatGroq(
-        temperature=0,  # Low temperature to minimize creative generation
+        temperature=0.0,  # Low temperature to minimize creative generation
         model_name="deepseek-r1-distill-llama-70b",
         groq_api_key=st.secrets["general"]["GROQ_API_KEY"]
     )
