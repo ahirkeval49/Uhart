@@ -205,9 +205,9 @@ User Query: {user_query}
 
     # Add this processing step to remove the <think> section
     if '</think>' in raw_content:
-    final_answer = raw_content.split('</think>', 1)[-1].strip()
+        final_answer = raw_content.split('</think>', 1)[-1].strip()
     else:
-    final_answer = raw_content  # Fallback in case formatting changes
+        final_answer = raw_content  # Fallback in case formatting changes
 
     st.markdown(f"**Response:** {final_answer}")
 
